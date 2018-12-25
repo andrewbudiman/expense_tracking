@@ -6,13 +6,16 @@ class Transaction:
     def __init__(self, date: str, description: str, debit: str, credit: str):
         self.date = date
         self.description = description
-        self.debit = float(debit) if debit else 0
-        self.credit = float(credit) if credit else 0
-        # xcxc - what to do with credit?
+
+        # calculate a raw amount
+        parsed_debit = float(debit) if debit else 0
+        parsed_credit = float(credit) if credit else 0
+        assert(parsed_debit or parsed_credit)
+        self.amount = parsed_debit - parsed_credit
 
     def pretty(self):
         return "{} {} {}".format(
                 self.date,
                 self.description,
-                self.debit
+                self.amount
         )

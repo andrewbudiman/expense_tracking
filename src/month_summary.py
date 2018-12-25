@@ -10,6 +10,7 @@ class MonthlySummary:
     def __init__(self):
         self.categorized_transactions = { category: [] for category in Category }
         self.skipped_transactions = []
+        self.credit_transactions = []
 
     def add_transaction(self, transaction, category):
         self.categorized_transactions[category].append(transaction)
@@ -17,7 +18,11 @@ class MonthlySummary:
     def skip_transaction(self, transaction):
         self.skipped_transactions.append(transaction)
 
+    def credit_transaction(self, transaction):
+        self.credit_transactions.append(transaction)
+
     def pretty(self):
+        # categories
         def category_sum(transactions):
             amounts = [float(transaction.debit) for transaction in transactions]
             return sum(amounts)
@@ -30,10 +35,15 @@ class MonthlySummary:
 
         all_category_transactions = '\n'.join([category_transactions(k, v) for k, v in self.categorized_transactions.items()])
 
+        # skipped
         pretty_skipped_transactions = common.pretty_transactions(self.skipped_transactions)
-        formatted_skipped_transactions = "\nskipped:\n\t{}".format('\n\t'.join(pretty_skipped_transactions))
+        formatted_skipped_transactions = "skipped:\n\t{}".format('\n\t'.join(pretty_skipped_transactions))
 
-        return all_category_transactions + formatted_skipped_transactions
+        # credit
+        pretty_credit_transactions = common.pretty_transactions(self.credit_transactions)
+        formatted_credit_transactions = "unresolved credit:\n\t{}".format('\n\t'.join(pretty_credit_transactions))
+
+        return '\n'.join([all_category_transactions, formatted_skipped_transactions, formatted_credit_transactions])
 
 def summarize(config_filename, capitalone_filename):
     config = parse_config(config_filename)
@@ -43,6 +53,8 @@ def summarize(config_filename, capitalone_filename):
     for transaction in transactions[:5]:
         if transaction.description in config['blacklist']:
             summary.skip_transaction(transaction)
+        elif transaction.amount < 0:
+            summary.credit_transaction(transaction)
         else:
             print("\n{}".format(transaction.pretty()))
             category = Category.choose()

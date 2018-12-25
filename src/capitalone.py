@@ -4,9 +4,8 @@ import csv
 from transaction import Transaction
 
 def transaction_from_fields(fields):
-    print(fields)
     return Transaction(
-            date=fields[0],
+            date=fields[-1],
             description=fields[3],
             debit=fields[5],
             credit=fields[6]
