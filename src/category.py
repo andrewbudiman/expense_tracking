@@ -13,12 +13,16 @@ class Category(Enum):
     def choose():
         assert(len(Category) < 10, "Code assumes there are fewer than 10 cagegories")
         print('Choose a category (10, 20, etc to choose and create a rule)')
+        print('\t0: Skip')
         for idx, category in enumerate(list(Category)):
             print("\t{}: {}".format(1+idx, category.name))
     
         try:
             choice = int(sys.stdin.readline().strip())
             save_choice = False
+
+            if not choice:
+                return None
 
             if choice >= 10:
                 save_choice = True

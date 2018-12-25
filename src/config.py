@@ -27,7 +27,7 @@ class Config:
         }
 
         with open(filename, 'w') as f:
-            f.write(json.dumps(config_map, indent=4, sort_keys=True) + "\n")
+            f.write(json.dumps(config_map, indent=2, sort_keys=True) + "\n")
 
 if __name__ == "__main__":
     parser = ArgumentParser()

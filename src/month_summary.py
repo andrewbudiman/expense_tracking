@@ -69,13 +69,17 @@ def summarize(config_filename, new_config_filename, capitalone_filename):
             matching_rule = maybe_category_from_rule(config.rules, transaction)
             if matching_rule:
                 print("Matched rule, category: {}".format(matching_rule.category.name))
-                category = matching_rule.category
+                summary.add_transaction(transaction, matching_rule.category)
             else:
-                (category, save_choice) = Category.choose()
-                if save_choice:
-                    config.rules.append(Rule(transaction.description, category))
-                    config.save_to_file(new_config_filename)
-            summary.add_transaction(transaction, category)
+                choice = Category.choose()
+                if not choice:
+                    summary.skip_transaction(transaction)
+                else:
+                    (category, save_choice) = choice
+                    if save_choice:
+                        config.rules.append(Rule(transaction.description, category))
+                        config.save_to_file(new_config_filename)
+                    summary.add_transaction(transaction, category)
 
     print(summary.pretty())
 
