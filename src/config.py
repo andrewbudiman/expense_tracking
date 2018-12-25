@@ -10,13 +10,28 @@ class Config:
         self.rules = [Rule(rule['description'], rule['category']) for rule in config_map['rules']]
 
     @staticmethod
-    def from_file(filename):
+    def load_from_file(filename):
         with open(filename, 'r') as f:
             return Config(json.loads(f.read()))
+
+    def save_to_file(self, filename):
+        config_map = {
+                'blacklist': self.blacklist,
+                'rules': [
+                    {
+                        'description': rule.description,
+                        'category': rule.category.value
+                    }
+                    for rule in self.rules
+                ]
+        }
+
+        with open(filename, 'w') as f:
+            f.write(json.dumps(config_map, indent=4, sort_keys=True) + "\n")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('file', help='config file')
 
     args = parser.parse_args()
-    Config.from_file(args.file)
+    Config.load_from_file(args.file)

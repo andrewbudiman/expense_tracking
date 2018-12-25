@@ -52,8 +52,8 @@ def maybe_category_from_rule(rules, transaction):
         assert(len(matching_rules) == 1, "multiple matching rules for transaction: {}".format(transaction))
         return matching_rules[0]
 
-def summarize(config_filename, capitalone_filename):
-    config = Config.from_file(config_filename)
+def summarize(config_filename, new_config_filename, capitalone_filename):
+    config = Config.load_from_file(config_filename)
     summary = MonthlySummary()
 
     transactions = capitalone.parse(capitalone_filename)
@@ -74,14 +74,17 @@ def summarize(config_filename, capitalone_filename):
                 (category, save_choice) = Category.choose()
                 if save_choice:
                     config.rules.append(Rule(transaction.description, category))
+                    config.save_to_file(new_config_filename)
             summary.add_transaction(transaction, category)
 
     print(summary.pretty())
 
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('--config', required=True)
+    parser.add_argument('--new-config', required=True)
     parser.add_argument('--capitalone', required=True)
 
     args = parser.parse_args()
-    summarize(args.config, args.capitalone)
+    summarize(args.config, args.new_config, args.capitalone)
