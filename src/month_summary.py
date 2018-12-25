@@ -4,6 +4,7 @@ import capitalone
 from category import Category
 import common
 from config import Config
+from rule import Rule
 from transaction import Transaction
 
 class MonthlySummary:
@@ -56,7 +57,7 @@ def summarize(config_filename, capitalone_filename):
     summary = MonthlySummary()
 
     transactions = capitalone.parse(capitalone_filename)
-    for transaction in transactions[:3]:
+    for transaction in transactions:
         print("\n{}".format(transaction.pretty()))
         if transaction.description in config.blacklist:
             print("Blacklisted")
@@ -70,7 +71,9 @@ def summarize(config_filename, capitalone_filename):
                 print("Matched rule, category: {}".format(matching_rule.category.name))
                 category = matching_rule.category
             else:
-                category = Category.choose()
+                (category, save_choice) = Category.choose()
+                if save_choice:
+                    config.rules.append(Rule(transaction.description, category))
             summary.add_transaction(transaction, category)
 
     print(summary.pretty())

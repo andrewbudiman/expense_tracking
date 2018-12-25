@@ -2,21 +2,30 @@ from enum import Enum
 import sys
 
 class Category(Enum):
-    Need = 1
-    Okay = 2
-    Food = 3
-    Coffee = 4
-    Fun = 5
+    # Keep a stable ordering please
+    Need = 'Need'
+    Okay = 'Okay'
+    Food = 'Food'
+    Coffee = 'Coffee'
+    Fun = 'Fun'
 
     @staticmethod
     def choose():
-        print('Choose a category')
-        for category in Category:
-            print("\t{}: {}".format(category.value, category.name))
+        assert(len(Category) < 10, "Code assumes there are fewer than 10 cagegories")
+        print('Choose a category (10, 20, etc to choose and create a rule)')
+        for idx, category in enumerate(list(Category)):
+            print("\t{}: {}".format(1+idx, category.name))
     
-        choice = sys.stdin.readline()
         try:
-            return Category(int(choice.strip()))
+            choice = int(sys.stdin.readline().strip())
+            save_choice = False
+
+            if choice >= 10:
+                save_choice = True
+                choice = int(choice / 10)
+
+            chosen_category = list(Category)[choice - 1]
+            return (chosen_category, save_choice)
         except ValueError:
             print('Invalid input, try again.')
-            return get_category()
+            return Category.choose()
