@@ -1,13 +1,13 @@
 from argparse import ArgumentParser
 import json
 
+import matchers
 from rule import Rule
 
 class Config:
-
     def __init__(self, config_map):
-        self.blacklist = config_map['blacklist']
-        self.rules = [Rule(rule['description'], rule['category']) for rule in config_map['rules']]
+        self.blacklist = [matchers.from_raw(m) for m in config_map['blacklist']]
+        self.rules = [Rule.from_raw(rule) for rule in config_map['rules']]
 
     @staticmethod
     def load_from_file(filename):
@@ -16,14 +16,8 @@ class Config:
 
     def save_to_file(self, filename):
         config_map = {
-                'blacklist': self.blacklist,
-                'rules': [
-                    {
-                        'description': rule.description,
-                        'category': rule.category.value
-                    }
-                    for rule in self.rules
-                ]
+                'blacklist': [matcher.to_raw() for matcher in self.blacklist],
+                'rules': [rule.to_raw() for rule in self.rules]
         }
 
         with open(filename, 'w') as f:

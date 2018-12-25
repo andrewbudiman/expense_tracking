@@ -11,7 +11,7 @@ class Category(Enum):
 
     @staticmethod
     def choose():
-        assert(len(Category) < 10, "Code assumes there are fewer than 10 cagegories")
+        assert len(Category) < 10, "Code assumes there are fewer than 10 cagegories"
         print('Choose a category (10, 20, etc to choose and create a rule)')
         print('\t0: Skip')
         for idx, category in enumerate(list(Category)):

@@ -10,7 +10,7 @@ class Transaction:
         # calculate a raw amount
         parsed_debit = float(debit) if debit else 0
         parsed_credit = float(credit) if credit else 0
-        assert(parsed_debit or parsed_credit)
+        assert parsed_debit or parsed_credit
         self.amount = parsed_debit - parsed_credit
 
     def pretty(self):

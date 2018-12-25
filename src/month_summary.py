@@ -4,6 +4,7 @@ import capitalone
 from category import Category
 import common
 from config import Config
+from matchers import EqualityMatcher
 from rule import Rule
 from transaction import Transaction
 
@@ -47,10 +48,12 @@ class MonthlySummary:
         return '\n'.join([all_category_transactions, formatted_skipped_transactions, formatted_credit_transactions])
 
 def maybe_category_from_rule(rules, transaction):
-    matching_rules = [rule for rule in rules if rule.description == transaction.description]
-    if matching_rules:
-        assert(len(matching_rules) == 1, "multiple matching rules for transaction: {}".format(transaction))
-        return matching_rules[0]
+    maybe_categories = [rule.maybe_category(transaction) for rule in rules]
+    matching_categories = list(filter(lambda x: x != None, maybe_categories))
+
+    if matching_categories:
+        assert len(matching_categories) == 1, "multiple matching rules for transaction: {}".format(transaction)
+        return matching_categories[0]
 
 def summarize(config_filename, new_config_filename, capitalone_filename):
     config = Config.load_from_file(config_filename)
@@ -59,17 +62,18 @@ def summarize(config_filename, new_config_filename, capitalone_filename):
     transactions = capitalone.parse(capitalone_filename)
     for transaction in transactions:
         print("\n{}".format(transaction.pretty()))
-        if transaction.description in config.blacklist:
+        
+        if next((True for matcher in config.blacklist if matcher.match(transaction)), None):
             print("Blacklisted")
             summary.skip_transaction(transaction)
         elif transaction.amount < 0:
             print("Credit transaction")
             summary.credit_transaction(transaction)
         else:
-            matching_rule = maybe_category_from_rule(config.rules, transaction)
-            if matching_rule:
-                print("Matched rule, category: {}".format(matching_rule.category.name))
-                summary.add_transaction(transaction, matching_rule.category)
+            matching_category = maybe_category_from_rule(config.rules, transaction)
+            if matching_category:
+                print("Matched rule, category: {}".format(matching_category.name))
+                summary.add_transaction(transaction, matching_category)
             else:
                 choice = Category.choose()
                 if not choice:
@@ -77,7 +81,8 @@ def summarize(config_filename, new_config_filename, capitalone_filename):
                 else:
                     (category, save_choice) = choice
                     if save_choice:
-                        config.rules.append(Rule(transaction.description, category))
+                        matcher = EqualityMatcher(transaction.description)
+                        config.rules.append(Rule(category, matcher))
                         config.save_to_file(new_config_filename)
                     summary.add_transaction(transaction, category)
 
