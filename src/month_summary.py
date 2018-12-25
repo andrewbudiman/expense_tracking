@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import capitalone
 from category import Category
 import common
-from config import parse_config
+from config import Config
 from transaction import Transaction
 
 class MonthlySummary:
@@ -24,7 +24,7 @@ class MonthlySummary:
     def pretty(self):
         # categories
         def category_sum(transactions):
-            amounts = [float(transaction.debit) for transaction in transactions]
+            amounts = [float(transaction.amount) for transaction in transactions]
             return sum(amounts)
 
         def category_transactions(category, transactions):
@@ -45,19 +45,32 @@ class MonthlySummary:
 
         return '\n'.join([all_category_transactions, formatted_skipped_transactions, formatted_credit_transactions])
 
+def maybe_category_from_rule(rules, transaction):
+    matching_rules = [rule for rule in rules if rule.description == transaction.description]
+    if matching_rules:
+        assert(len(matching_rules) == 1, "multiple matching rules for transaction: {}".format(transaction))
+        return matching_rules[0]
+
 def summarize(config_filename, capitalone_filename):
-    config = parse_config(config_filename)
+    config = Config.from_file(config_filename)
     summary = MonthlySummary()
 
     transactions = capitalone.parse(capitalone_filename)
-    for transaction in transactions[:5]:
-        if transaction.description in config['blacklist']:
+    for transaction in transactions[:3]:
+        print("\n{}".format(transaction.pretty()))
+        if transaction.description in config.blacklist:
+            print("Blacklisted")
             summary.skip_transaction(transaction)
         elif transaction.amount < 0:
+            print("Credit transaction")
             summary.credit_transaction(transaction)
         else:
-            print("\n{}".format(transaction.pretty()))
-            category = Category.choose()
+            matching_rule = maybe_category_from_rule(config.rules, transaction)
+            if matching_rule:
+                print("Matched rule, category: {}".format(matching_rule.category.name))
+                category = matching_rule.category
+            else:
+                category = Category.choose()
             summary.add_transaction(transaction, category)
 
     print(summary.pretty())

@@ -5,7 +5,7 @@ from transaction import Transaction
 
 def transaction_from_fields(fields):
     return Transaction(
-            date=fields[-1],
+            date=fields[0],
             description=fields[3],
             debit=fields[5],
             credit=fields[6]

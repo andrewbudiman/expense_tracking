@@ -17,5 +17,5 @@ class Transaction:
         return "{} {} {}".format(
                 self.date,
                 self.description,
-                self.amount
+                "{0:.2f}".format(self.amount)
         )
