@@ -19,3 +19,6 @@ class Transaction:
                 self.description,
                 "{0:.2f}".format(self.amount)
         )
+
+    def csv_row(self):
+        return [self.description, self.date, self.amount]

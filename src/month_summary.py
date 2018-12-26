@@ -1,4 +1,6 @@
 from argparse import ArgumentParser
+import csv
+import os
 
 import capitalone
 from category import Category
@@ -47,6 +49,29 @@ class MonthlySummary:
 
         return '\n'.join([all_category_transactions, formatted_skipped_transactions, formatted_credit_transactions])
 
+    def to_csv(self, output_dir):
+        def write_transactions(writer, transactions):
+            for transaction in sorted(transactions, key=lambda t: (t.description, t.date)):
+                writer.writerow(transaction.csv_row())
+
+        # categories
+        for category, transactions in self.categorized_transactions.items():
+            with open(os.path.join(output_dir, "{}.csv".format(category.name)), 'w') as f:
+                writer = csv.writer(f, quotechar='"', quoting=csv.QUOTE_ALL)
+                write_transactions(writer, transactions)
+
+        # unresolved
+        with open(os.path.join(output_dir, "unresolved.csv"), 'w') as f:
+            writer = csv.writer(f, quotechar='"', quoting=csv.QUOTE_ALL)
+
+            # skipped
+            writer.writerow(['skipped'])
+            write_transactions(writer, self.skipped_transactions)
+
+            # credit
+            writer.writerow(['credit'])
+            write_transactions(writer, self.credit_transactions)
+
 def maybe_category_from_rule(rules, transaction):
     maybe_categories = [rule.maybe_category(transaction) for rule in rules]
     matching_categories = list(filter(lambda x: x != None, maybe_categories))
@@ -55,7 +80,7 @@ def maybe_category_from_rule(rules, transaction):
         assert len(matching_categories) == 1, "multiple matching rules for transaction: {}".format(transaction)
         return matching_categories[0]
 
-def summarize(config_filename, new_config_filename, capitalone_filename):
+def summarize(config_filename, new_config_filename, capitalone_filename, output_dir):
     config = Config.load_from_file(config_filename)
     summary = MonthlySummary()
 
@@ -87,6 +112,8 @@ def summarize(config_filename, new_config_filename, capitalone_filename):
                     summary.add_transaction(transaction, category)
 
     print(summary.pretty())
+    if output_dir:
+        summary.to_csv(output_dir)
 
 
 if __name__ == "__main__":
@@ -94,6 +121,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', required=True)
     parser.add_argument('--new-config', required=True)
     parser.add_argument('--capitalone', required=True)
+    parser.add_argument('--output-dir')
 
     args = parser.parse_args()
-    summarize(args.config, args.new_config, args.capitalone)
+    summarize(args.config, args.new_config, args.capitalone, args.output_dir)
